@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Anniversary Mass — Photo Gallery | Vows &amp; Vinyl DJ Co.</title>
+<style>
+:root{--gold:#c9a227;--ink:#1c1b19;--paper:#faf7f0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:Georgia,'Times New Roman',serif}
+header{background:var(--ink);color:#f5efe0;padding:28px 20px 22px;text-align:center}
+header h1{margin:0;font-size:26px;letter-spacing:.5px}
+header .sub{color:var(--gold);font-size:14px;margin-top:6px;letter-spacing:2px;text-transform:uppercase}
+header p{max-width:640px;margin:12px auto 0;font-size:14.5px;line-height:1.5;color:#d8d2c2}
+.bar{text-align:center;padding:14px;background:#262420;position:sticky;top:0;z-index:5;box-shadow:0 2px 10px rgba(0,0,0,.4)}
+.bar a{color:var(--gold);text-decoration:none;font-size:14px;border:1px solid var(--gold);padding:8px 18px;border-radius:20px;display:inline-block}
+.bar a:hover{background:var(--gold);color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;max-width:1200px;margin:24px auto;padding:0 16px}
+.card{background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.12);cursor:pointer;position:relative}
+.card img{width:100%;display:block;aspect-ratio:3/2;object-fit:cover}
+.card .cap{padding:8px 10px;font-size:13px;display:flex;justify-content:space-between;align-items:center}
+.card .cap a{color:var(--ink);text-decoration:none;border:1px solid #bbb;border-radius:14px;padding:3px 10px;font-size:12px}
+.card .cap a:hover{background:var(--gold);border-color:var(--gold)}
+footer{text-align:center;padding:26px;color:#8a8378;font-size:13px}
+#lb{position:fixed;inset:0;background:rgba(10,9,8,.94);display:none;z-index:50;flex-direction:column;align-items:center;justify-content:center}
+#lb.on{display:flex}
+#lb img{max-width:94vw;max-height:82vh;border-radius:4px;box-shadow:0 8px 40px rgba(0,0,0,.6)}
+#lb .row{margin-top:14px;display:flex;gap:14px}
+#lb .row a,#lb .row button{color:#f5efe0;background:transparent;border:1px solid var(--gold);padding:9px 20px;border-radius:22px;font-size:14px;cursor:pointer;font-family:inherit}
+#lb .row a:hover,#lb .row button:hover{background:var(--gold);color:var(--ink)}
+#lb .x{position:absolute;top:14px;right:18px;font-size:30px;color:#f5efe0;cursor:pointer;background:none;border:none}
+#lb .nav{position:absolute;top:50%;transform:translateY(-50%);font-size:42px;color:#f5efe0;background:none;border:none;cursor:pointer;padding:16px}
+#lb .prev{left:8px}#lb .next{right:8px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Anniversary Mass — Photo Gallery</h1>
+  <div class="sub">Vows &amp; Vinyl DJ Co.</div>
+  <p>Photos from the photo booth. Click any photo to view it full-size; use the download button to save it. Congratulations to all the couples celebrating their anniversaries.</p>
+</header>
+<div class="bar"><a href="59EU_final_photos.zip" download>⬇ Download all photos (ZIP)</a></div>
+<div class="grid" id="grid"></div>
+<footer>Hosted by Vows &amp; Vinyl DJ Co. · vowsok.com</footer>
+<div id="lb">
+  <button class="x" onclick="closeLb()">✕</button>
+  <button class="nav prev" onclick="stepLb(-1)">‹</button>
+  <img id="lbimg" src="" alt="">
+  <div class="row">
+    <a id="lbdl" href="" download>⬇ Download this photo</a>
+    <button onclick="closeLb()">Close</button>
+  </div>
+  <button class="nav next" onclick="stepLb(1)">›</button>
+</div>
+<script>
+const PHOTOS = [{"n": "001", "t": "photo-001.jpg", "f": "photo-001.jpeg"}, {"n": "003", "t": "photo-003.jpg", "f": "photo-003.jpeg"}, {"n": "004", "t": "photo-004.jpg", "f": "photo-004.jpeg"}, {"n": "005", "t": "photo-005.jpg", "f": "photo-005.jpeg"}, {"n": "007", "t": "photo-007.jpg", "f": "photo-007.jpeg"}, {"n": "008", "t": "photo-008.jpg", "f": "photo-008.jpeg"}, {"n": "009", "t": "photo-009.jpg", "f": "photo-009.jpeg"}, {"n": "010", "t": "photo-010.jpg", "f": "photo-010.jpeg"}, {"n": "011", "t": "photo-011.jpg", "f": "photo-011.jpeg"}, {"n": "012", "t": "photo-012.jpg", "f": "photo-012.jpeg"}, {"n": "014", "t": "photo-014.jpg", "f": "photo-014.jpeg"}, {"n": "015", "t": "photo-015.jpg", "f": "photo-015.jpeg"}, {"n": "016", "t": "photo-016.jpg", "f": "photo-016.jpeg"}, {"n": "017", "t": "photo-017.jpg", "f": "photo-017.jpeg"}, {"n": "018", "t": "photo-018.jpg", "f": "photo-018.jpeg"}, {"n": "020", "t": "photo-020.jpg", "f": "photo-020.jpeg"}, {"n": "021", "t": "photo-021.jpg", "f": "photo-021.jpeg"}, {"n": "022", "t": "photo-022.jpg", "f": "photo-022.jpeg"}, {"n": "023", "t": "photo-023.jpg", "f": "photo-023.jpeg"}, {"n": "024", "t": "photo-024.jpg", "f": "photo-024.jpeg"}, {"n": "025", "t": "photo-025.jpg", "f": "photo-025.jpeg"}, {"n": "027", "t": "photo-027.jpg", "f": "photo-027.jpeg"}, {"n": "028", "t": "photo-028.jpg", "f": "photo-028.jpeg"}, {"n": "029", "t": "photo-029.jpg", "f": "photo-029.jpeg"}, {"n": "030", "t": "photo-030.jpg", "f": "photo-030.jpeg"}, {"n": "031", "t": "photo-031.jpg", "f": "photo-031.jpeg"}, {"n": "033", "t": "photo-033.jpg", "f": "photo-033.jpeg"}, {"n": "034", "t": "photo-034.jpg", "f": "photo-034.jpeg"}, {"n": "035", "t": "photo-035.jpg", "f": "photo-035.jpeg"}, {"n": "036", "t": "photo-036.jpg", "f": "photo-036.jpeg"}, {"n": "037", "t": "photo-037.jpg", "f": "photo-037.jpeg"}, {"n": "039", "t": "photo-039.jpg", "f": "photo-039.jpeg"}, {"n": "040", "t": "photo-040.jpg", "f": "photo-040.jpeg"}, {"n": "041", "t": "photo-041.jpg", "f": "photo-041.jpeg"}, {"n": "043", "t": "photo-043.jpg", "f": "photo-043.jpeg"}, {"n": "044", "t": "photo-044.jpg", "f": "photo-044.jpeg"}, {"n": "045", "t": "photo-045.jpg", "f": "photo-045.jpeg"}, {"n": "046", "t": "photo-046.jpg", "f": "photo-046.jpeg"}, {"n": "047", "t": "photo-047.jpg", "f": "photo-047.jpeg"}, {"n": "048", "t": "photo-048.jpg", "f": "photo-048.jpeg"}, {"n": "049", "t": "photo-049.jpg", "f": "photo-049.jpeg"}, {"n": "050", "t": "photo-050.jpg", "f": "photo-050.jpeg"}, {"n": "051", "t": "photo-051.jpg", "f": "photo-051.jpeg"}, {"n": "052", "t": "photo-052.jpg", "f": "photo-052.jpeg"}, {"n": "054", "t": "photo-054.jpg", "f": "photo-054.jpeg"}, {"n": "055", "t": "photo-055.jpg", "f": "photo-055.jpeg"}, {"n": "058", "t": "photo-058.jpg", "f": "photo-058.jpeg"}, {"n": "059", "t": "photo-059.jpg", "f": "photo-059.jpeg"}, {"n": "060", "t": "photo-060.jpg", "f": "photo-060.jpeg"}, {"n": "061", "t": "photo-061.jpg", "f": "photo-061.jpeg"}, {"n": "062", "t": "photo-062.jpg", "f": "photo-062.jpeg"}, {"n": "063", "t": "photo-063.jpg", "f": "photo-063.jpeg"}, {"n": "064", "t": "photo-064.jpg", "f": "photo-064.jpeg"}, {"n": "065", "t": "photo-065.jpg", "f": "photo-065.jpeg"}, {"n": "066", "t": "photo-066.jpg", "f": "photo-066.jpeg"}, {"n": "067", "t": "photo-067.jpg", "f": "photo-067.jpeg"}, {"n": "069", "t": "photo-069.jpg", "f": "photo-069.jpeg"}, {"n": "071", "t": "photo-071.jpg", "f": "photo-071.jpeg"}, {"n": "072", "t": "photo-072.jpg", "f": "photo-072.jpeg"}, {"n": "073", "t": "photo-073.jpg", "f": "photo-073.jpeg"}, {"n": "075", "t": "photo-075.jpg", "f": "photo-075.jpeg"}, {"n": "077", "t": "photo-077.jpg", "f": "photo-077.jpeg"}, {"n": "078", "t": "photo-078.jpg", "f": "photo-078.jpeg"}, {"n": "080", "t": "photo-080.jpg", "f": "photo-080.jpeg"}, {"n": "081", "t": "photo-081.jpg", "f": "photo-081.jpeg"}, {"n": "082", "t": "photo-082.jpg", "f": "photo-082.jpeg"}, {"n": "083", "t": "photo-083.jpg", "f": "photo-083.jpeg"}, {"n": "084", "t": "photo-084.jpg", "f": "photo-084.jpeg"}, {"n": "085", "t": "photo-085.jpg", "f": "photo-085.jpeg"}, {"n": "086", "t": "photo-086.jpg", "f": "photo-086.jpeg"}, {"n": "087", "t": "photo-087.jpg", "f": "photo-087.jpeg"}, {"n": "088", "t": "photo-088.jpg", "f": "photo-088.jpeg"}, {"n": "089", "t": "photo-089.jpg", "f": "photo-089.jpeg"}, {"n": "090", "t": "photo-090.jpg", "f": "photo-090.jpeg"}];
+const grid = document.getElementById('grid');
+grid.innerHTML = PHOTOS.map((p,i) =>
+  `<div class="card" onclick="openLb(${i})"><img src="thumbs/${p.t}" loading="lazy" alt="Photo ${p.n}">
+   <div class="cap"><span>Photo ${p.n}</span><a href="photos/${p.f}" download onclick="event.stopPropagation()">⬇ Save</a></div></div>`).join('');
+let cur = 0;
+function openLb(i){ cur = i; const p = PHOTOS[i]; document.getElementById('lbimg').src = 'photos/' + p.f;
+  document.getElementById('lbdl').href = 'photos/' + p.f; document.getElementById('lb').classList.add('on'); }
+function closeLb(){ document.getElementById('lb').classList.remove('on'); }
+function stepLb(d){ cur = (cur + d + PHOTOS.length) % PHOTOS.length; openLb(cur); }
+document.addEventListener('keydown', e => { if(!document.getElementById('lb').classList.contains('on')) return;
+  if(e.key === 'Escape') closeLb(); if(e.key === 'ArrowLeft') stepLb(-1); if(e.key === 'ArrowRight') stepLb(1); });
+</script>
+</body>
+</html>

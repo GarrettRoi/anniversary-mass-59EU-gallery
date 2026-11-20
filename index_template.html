@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Anniversary Mass — Photo Gallery | Vows &amp; Vinyl DJ Co.</title>
+<style>
+:root{--gold:#c9a227;--ink:#1c1b19;--paper:#faf7f0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:Georgia,'Times New Roman',serif}
+header{background:var(--ink);color:#f5efe0;padding:28px 20px 22px;text-align:center}
+header h1{margin:0;font-size:26px;letter-spacing:.5px}
+header .sub{color:var(--gold);font-size:14px;margin-top:6px;letter-spacing:2px;text-transform:uppercase}
+header p{max-width:640px;margin:12px auto 0;font-size:14.5px;line-height:1.5;color:#d8d2c2}
+.bar{text-align:center;padding:14px;background:#262420;position:sticky;top:0;z-index:5;box-shadow:0 2px 10px rgba(0,0,0,.4)}
+.bar a{color:var(--gold);text-decoration:none;font-size:14px;border:1px solid var(--gold);padding:8px 18px;border-radius:20px;display:inline-block}
+.bar a:hover{background:var(--gold);color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;max-width:1200px;margin:24px auto;padding:0 16px}
+.card{background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.12);cursor:pointer;position:relative}
+.card img{width:100%;display:block;aspect-ratio:3/2;object-fit:cover}
+.card .cap{padding:8px 10px;font-size:13px;display:flex;justify-content:space-between;align-items:center}
+.card .cap a{color:var(--ink);text-decoration:none;border:1px solid #bbb;border-radius:14px;padding:3px 10px;font-size:12px}
+.card .cap a:hover{background:var(--gold);border-color:var(--gold)}
+footer{text-align:center;padding:26px;color:#8a8378;font-size:13px}
+#lb{position:fixed;inset:0;background:rgba(10,9,8,.94);display:none;z-index:50;flex-direction:column;align-items:center;justify-content:center}
+#lb.on{display:flex}
+#lb img{max-width:94vw;max-height:82vh;border-radius:4px;box-shadow:0 8px 40px rgba(0,0,0,.6)}
+#lb .row{margin-top:14px;display:flex;gap:14px}
+#lb .row a,#lb .row button{color:#f5efe0;background:transparent;border:1px solid var(--gold);padding:9px 20px;border-radius:22px;font-size:14px;cursor:pointer;font-family:inherit}
+#lb .row a:hover,#lb .row button:hover{background:var(--gold);color:var(--ink)}
+#lb .x{position:absolute;top:14px;right:18px;font-size:30px;color:#f5efe0;cursor:pointer;background:none;border:none}
+#lb .nav{position:absolute;top:50%;transform:translateY(-50%);font-size:42px;color:#f5efe0;background:none;border:none;cursor:pointer;padding:16px}
+#lb .prev{left:8px}#lb .next{right:8px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Anniversary Mass — Photo Gallery</h1>
+  <div class="sub">Vows &amp; Vinyl DJ Co.</div>
+  <p>Photos from the photo booth. Click any photo to view it full-size; use the download button to save it. Congratulations to all the couples celebrating their anniversaries.</p>
+</header>
+<div class="bar"><a href="59EU_final_photos.zip" download>⬇ Download all photos (ZIP)</a></div>
+<div class="grid" id="grid"></div>
+<footer>Hosted by Vows &amp; Vinyl DJ Co. · vowsok.com</footer>
+<div id="lb">
+  <button class="x" onclick="closeLb()">✕</button>
+  <button class="nav prev" onclick="stepLb(-1)">‹</button>
+  <img id="lbimg" src="" alt="">
+  <div class="row">
+    <a id="lbdl" href="" download>⬇ Download this photo</a>
+    <button onclick="closeLb()">Close</button>
+  </div>
+  <button class="nav next" onclick="stepLb(1)">›</button>
+</div>
+<script>
+const PHOTOS = __PHOTOS__;
+const grid = document.getElementById('grid');
+grid.innerHTML = PHOTOS.map((p,i) =>
+  `<div class="card" onclick="openLb(${i})"><img src="thumbs/${p.t}" loading="lazy" alt="Photo ${p.n}">
+   <div class="cap"><span>Photo ${p.n}</span><a href="photos/${p.f}" download onclick="event.stopPropagation()">⬇ Save</a></div></div>`).join('');
+let cur = 0;
+function openLb(i){ cur = i; const p = PHOTOS[i]; document.getElementById('lbimg').src = 'photos/' + p.f;
+  document.getElementById('lbdl').href = 'photos/' + p.f; document.getElementById('lb').classList.add('on'); }
+function closeLb(){ document.getElementById('lb').classList.remove('on'); }
+function stepLb(d){ cur = (cur + d + PHOTOS.length) % PHOTOS.length; openLb(cur); }
+document.addEventListener('keydown', e => { if(!document.getElementById('lb').classList.contains('on')) return;
+  if(e.key === 'Escape') closeLb(); if(e.key === 'ArrowLeft') stepLb(-1); if(e.key === 'ArrowRight') stepLb(1); });
+</script>
+</body>
+</html>
