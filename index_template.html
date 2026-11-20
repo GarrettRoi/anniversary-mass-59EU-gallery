@@ -23,6 +23,14 @@ header p{max-width:640px;margin:12px auto 0;font-size:14.5px;line-height:1.5;col
 .card .cap a{color:var(--ink);text-decoration:none;border:1px solid #bbb;border-radius:14px;padding:3px 10px;font-size:12px}
 .card .cap a:hover{background:var(--gold);border-color:var(--gold)}
 footer{text-align:center;padding:26px;color:#8a8378;font-size:13px}
+.cta{background:var(--ink);color:#f5efe0;max-width:1200px;margin:30px auto;padding:34px 26px;border-radius:10px;text-align:center;border:1px solid var(--gold)}
+.cta h2{margin:0 0 8px;font-size:22px;color:var(--gold)}
+.cta p{margin:0 auto 18px;max-width:560px;font-size:14.5px;line-height:1.55;color:#d8d2c2}
+.cta .btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.cta .btns a{color:var(--ink);background:var(--gold);text-decoration:none;font-size:15px;padding:11px 26px;border-radius:24px;font-weight:bold}
+.cta .btns a.ghost{background:transparent;color:var(--gold);border:1px solid var(--gold);font-weight:normal}
+.cta .btns a:hover{filter:brightness(1.12)}
+.note{font-size:12px;color:#8a8378;margin-top:14px}
 #lb{position:fixed;inset:0;background:rgba(10,9,8,.94);display:none;z-index:50;flex-direction:column;align-items:center;justify-content:center}
 #lb.on{display:flex}
 #lb img{max-width:94vw;max-height:82vh;border-radius:4px;box-shadow:0 8px 40px rgba(0,0,0,.6)}
@@ -41,8 +49,17 @@ footer{text-align:center;padding:26px;color:#8a8378;font-size:13px}
   <p>Photos from the photo booth. Click any photo to view it full-size; use the download button to save it. Congratulations to all the couples celebrating their anniversaries.</p>
 </header>
 <div class="bar"><a href="59EU_final_photos.zip" download>⬇ Download all photos (ZIP)</a></div>
+<div class="cta">
+  <h2>Loved your photos?</h2>
+  <p>Vows &amp; Vinyl DJ Co. brings the same energy to weddings, anniversaries, and church events across Oklahoma — DJ services and photo booth, Catholic-friendly and family-first.</p>
+  <div class="btns">
+    <a href="https://vowsok.com" target="_blank" rel="noopener">Book us for your event → vowsok.com</a>
+    <a class="ghost" href="sms:+14056731410">📱 Text or call (405) 673-1410</a>
+  </div>
+  <div class="note">Mention this gallery when you book — we love coming back to celebrate with the same community.</div>
+</div>
 <div class="grid" id="grid"></div>
-<footer>Hosted by Vows &amp; Vinyl DJ Co. · vowsok.com</footer>
+<footer>Photos by <b>Vows &amp; Vinyl DJ Co.</b> · DJ &amp; photo booth for weddings and events · <a href="https://vowsok.com" style="color:var(--gold)">vowsok.com</a> · (405) 673-1410</footer>
 <div id="lb">
   <button class="x" onclick="closeLb()">✕</button>
   <button class="nav prev" onclick="stepLb(-1)">‹</button>
