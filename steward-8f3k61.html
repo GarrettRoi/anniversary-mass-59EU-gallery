@@ -86,7 +86,7 @@ async function gh(method, path, body, raw){
   const headers = {"Authorization": "Bearer " + tok(), "Accept": "application/vnd.github+json"};
   let opts = {method, headers};
   if(body) { headers["Content-Type"] = "application/json"; opts.body = JSON.stringify(body); }
-  const r = await fetch("https://api.github.com/repos/" + REPO + "/" + path, opts);
+  const r = await fetch("https://api.github.com/repos/" + REPO + "/" + path + (method === "GET" ? (path.includes("?") ? "&cb=" + Date.now() : "?cb=" + Date.now()) : ""), opts);
   if(!r.ok) throw new Error(method + " " + path + " -> " + r.status + " " + (await r.text()).slice(0,140));
   return raw ? r.arrayBuffer() : r.json();
 }
@@ -123,12 +123,21 @@ async function loadStats(){
 window.delPhoto = async function(n){
   if(!confirm("Delete photo " + n + " from the live gallery?")) return;
   try{
-    const {json, data} = await getManifest();
-    const list = data.filter(p => p.n !== n);
-    await putFile("photos.json", b64(JSON.stringify(list, null, 1)), "admin: remove photo " + n, json.sha);
     for(const suffix of ["photos/photo-" + n + ".jpeg", "thumbs/photo-" + n + ".jpg"]){
       try{ const jf = await gh("GET", "contents/" + suffix + "?ref=" + BRANCH);
            await putFile(suffix, "", "admin: delete photo file " + suffix, jf.sha); }catch(e){ log("note: " + e.message); }
+    }
+    let {json, data} = await getManifest();
+    const list = data.filter(p => p.n !== n);
+    try{
+      await putFile("photos.json", b64(JSON.stringify(list, null, 1)), "admin: remove photo " + n, json.sha);
+    }catch(e){
+      if(String(e.message).includes("409")){
+        log("sha race — refetching and retrying once");
+        const fresh = await getManifest();
+        const freshData = fresh.data.filter(p => p.n !== n);
+        await putFile("photos.json", b64(JSON.stringify(freshData, null, 1)), "admin: remove photo " + n + " (retry)", fresh.json.sha);
+      } else throw e;
     }
     log("Deleted photo " + n + " — live gallery updates in ~1 min.");
     await loadStats();
