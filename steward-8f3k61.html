@@ -40,12 +40,11 @@ th{color:#aaa;font-weight:normal}
 
 <div id="admin" style="display:none">
   <div class="row">
-    <span id="tokstat" class="stat">GitHub token: not loaded</span>
+    <span id="tokstat" class="stat">GitHub token (add/delete only): not loaded</span>
     <button onclick="askToken()" class="primary">Set / update GitHub token</button>
     <button onclick="refreshStats()">↻ Refresh analytics</button>
   </div>
-  <p class="hint">Token needs: fine-grained, this repository only, permission “Contents: Read and write”.
-  It is stored only in this browser's local storage and is never sent anywhere except GitHub.</p>
+  <p class="hint">The token is ONLY needed to add or delete photos. Analytics now load automatically from the daily snapshot file — no token required.</p>
 
   <h2>Add photos (file, multiple files, or ZIP)</h2>
   <div class="row">
@@ -58,7 +57,7 @@ th{color:#aaa;font-weight:normal}
 
   <h2>Photos &amp; analytics</h2>
   <div class="row"><button onclick="loadStats()">Load analytics table</button>
-  <span class="stat">GitHub traffic, rolling 14 days, refreshed daily: thumb views + full-size opens per photo</span></div>
+  <span class="stat" id="statmeta">token not needed for analytics — only for add/delete</span></div>
   <table id="tbl"><thead><tr><th>File</th><th>Views</th><th>Clicks</th><th>Downloads</th><th></th></tr></thead><tbody></tbody></table>
   <div id="log"></div>
 </div>
@@ -106,26 +105,24 @@ async function putFile(path, contentB64, message, sha){
 function b64(str){ return btoa(unescape(encodeURIComponent(str))); }
 async function refreshStats(){ await loadStats(); }
 async function loadStats(){
-  const {data} = await getManifest();
-  let paths = [];
   try{
-    const t = await gh("GET", "traffic/popular/paths");
-    paths = (t && t.paths) || [];
-  }catch(e){ log("traffic API failed: " + e.message); return; }
-  const m = {};
-  for(const p of paths){ m[p.path] = {count: p.count, uniq: p.uniques}; }
-  const tb = document.querySelector('#tbl tbody'); tb.innerHTML = '';
-  tb.innerHTML = `<tr><th></th><th>Thumb views</th><th>Full-size opens</th><th>Unique*</th><th></th></tr>`;
-  for(const p of data){
-    const tv = (m["/thumbs/photo-" + p.n + ".jpg"] || {count: 0});
-    const fv = (m["/photos/photo-" + p.n + ".jpeg"] || {count: 0});
-    const uniq = Math.max(tv.uniq || 0, fv.uniq || 0);
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${p.f}</td><td class="num">${tv.count}</td><td class="num">${fv.count}</td><td class="num">${uniq || "—"}</td>
-      <td><button class="danger" onclick="delPhoto('${p.n}')">Delete</button></td>`;
-    tb.appendChild(tr);
-  }
-  log("Loaded GitHub traffic (" + paths.length + " tracked paths, 14-day window). Note: GitHub updates these counts once per day.");
+    const hist = await (await fetch("analytics.json?cb=" + Date.now())).json();
+    const days = Object.keys(hist).sort();
+    const latest = days[days.length - 1];
+    const snap = hist[latest] || {};
+    document.getElementById('statmeta').textContent = "snapshot: " + latest + " · " + Object.keys(snap).length + " tracked paths · GitHub refreshes daily";
+    const {data} = await getManifest();
+    const tb = document.querySelector('#tbl tbody'); tb.innerHTML = '';
+    for(const p of data){
+      const tv = snap["/thumbs/photo-" + p.n + ".jpg"] || {count: "—", uniq: "—"};
+      const fv = snap["/photos/photo-" + p.n + ".jpeg"] || {count: "—", uniq: "—"};
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${p.f}</td><td class="num">${tv.count}</td><td class="num">${fv.count}</td><td class="num">${fv.uniq !== "—" ? fv.uniq : "—"}</td>
+        <td><button class="danger" onclick="delPhoto('${p.n}')">Delete</button></td>`;
+      tb.appendChild(tr);
+    }
+    log("Loaded snapshot " + latest);
+  }catch(e){ log("stats load failed: " + e.message); }
 }
 window.delPhoto = async function(n){
   if(!confirm("Delete photo " + n + " from the live gallery?")) return;
