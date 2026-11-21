@@ -73,17 +73,15 @@ footer{text-align:center;padding:26px;color:#8a8378;font-size:13px}
   <button class="nav next" onclick="stepLb(1)">›</button>
 </div>
 <script>
-async function hit(k){ try{ fetch(`https://abacus.jasoncameron.dev/hit/${k}`); }catch(e){} }
 const PHOTOS = await (await fetch('photos.json?cb=' + Date.now())).json();
-hit('g59EU-visit');
+
 setInterval(() => {}, 1 << 30);
 const grid = document.getElementById('grid');
-PHOTOS.forEach((p,i) => hit(`g59EU-view-${p.n}`));
 grid.innerHTML = PHOTOS.map((p,i) =>
-  `<div class="card" onclick="openLb(${i}); hit(`g59EU-click-${p.n}`)"><img src="thumbs/${p.t}" loading="lazy" alt="Photo ${p.n}">
-   <div class="cap"><span>Photo ${p.n}</span><a href="photos/${p.f}" download onclick="event.stopPropagation(); hit(`g59EU-dl-${p.n}`)">⬇ Save</a></div></div>`).join('');
+  `<div class="card" onclick="openLb(${i})"><img src="thumbs/${p.t}" loading="lazy" alt="Photo ${p.n}">
+   <div class="cap"><span>Photo ${p.n}</span><a href="photos/${p.f}" download onclick="event.stopPropagation()">⬇ Save</a></div></div>`).join('');
 let cur = 0;
-function openLb(i){ cur = i; hit(`g59EU-view-${PHOTOS[i].n}`); const p = PHOTOS[i]; document.getElementById('lbimg').src = 'photos/' + p.f;
+function openLb(i){ cur = i; const p = PHOTOS[i]; document.getElementById('lbimg').src = 'photos/' + p.f;
   document.getElementById('lbdl').href = 'photos/' + p.f; document.getElementById('lb').classList.add('on'); }
 function closeLb(){ document.getElementById('lb').classList.remove('on'); }
 function stepLb(d){ cur = (cur + d + PHOTOS.length) % PHOTOS.length; openLb(cur); }

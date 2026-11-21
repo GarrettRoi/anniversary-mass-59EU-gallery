@@ -58,7 +58,7 @@ th{color:#aaa;font-weight:normal}
 
   <h2>Photos &amp; analytics</h2>
   <div class="row"><button onclick="loadStats()">Load analytics table</button>
-  <span class="stat">views = gallery loads · clicks = opened full-size · downloads = saved</span></div>
+  <span class="stat">GitHub traffic, rolling 14 days, refreshed daily: thumb views + full-size opens per photo</span></div>
   <table id="tbl"><thead><tr><th>File</th><th>Views</th><th>Clicks</th><th>Downloads</th><th></th></tr></thead><tbody></tbody></table>
   <div id="log"></div>
 </div>
@@ -67,8 +67,7 @@ th{color:#aaa;font-weight:normal}
 const PIN_HASH = "90ebf7385a864277dc9b3832709acd4be31d9dfd7b8698d99524bd3ea68fe552";
 const REPO = "GarrettRoi/anniversary-mass-59EU-gallery";
 const BRANCH = "main";
-const ABACUS = "https://abacus.jasoncameron.dev";
-const KEYP = "g59EU";
+
 function log(m){ const el = document.getElementById('log'); el.textContent += m + "\n"; el.scrollTop = el.scrollHeight; }
 function tok(){ return localStorage.getItem('gh_token') || ''; }
 function sha256(s){ return crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)).then(b => [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')); }
@@ -101,15 +100,25 @@ function b64(str){ return btoa(unescape(encodeURIComponent(str))); }
 async function refreshStats(){ await loadStats(); }
 async function loadStats(){
   const {data} = await getManifest();
+  let paths = [];
+  try{
+    const t = await gh("GET", "traffic/popular/paths");
+    paths = (t && t.paths) || [];
+  }catch(e){ log("traffic API failed: " + e.message); return; }
+  const m = {};
+  for(const p of paths){ m[p.path] = {count: p.count, uniq: p.uniques}; }
   const tb = document.querySelector('#tbl tbody'); tb.innerHTML = '';
+  tb.innerHTML = `<tr><th></th><th>Thumb views</th><th>Full-size opens</th><th>Unique*</th><th></th></tr>`;
   for(const p of data){
+    const tv = (m["/thumbs/photo-" + p.n + ".jpg"] || {count: 0});
+    const fv = (m["/photos/photo-" + p.n + ".jpeg"] || {count: 0});
+    const uniq = Math.max(tv.uniq || 0, fv.uniq || 0);
     const tr = document.createElement('tr');
-    const get = async (k) => { try { const r = await fetch(`${ABACUS}/get/${k}`); const t = await r.text(); return /^\d+$/.test(t) ? t : "0"; } catch(e){ return "—"; } };
-    const v = await get(KEYP + "-view-" + p.n), c = await get(KEYP + "-click-" + p.n), d = await get(KEYP + "-dl-" + p.n);
-    tr.innerHTML = `<td>${p.f}</td><td class="num">${v}</td><td class="num">${c}</td><td class="num">${d}</td>
+    tr.innerHTML = `<td>${p.f}</td><td class="num">${tv.count}</td><td class="num">${fv.count}</td><td class="num">${uniq || "—"}</td>
       <td><button class="danger" onclick="delPhoto('${p.n}')">Delete</button></td>`;
     tb.appendChild(tr);
   }
+  log("Loaded GitHub traffic (" + paths.length + " tracked paths, 14-day window). Note: GitHub updates these counts once per day.");
 }
 window.delPhoto = async function(n){
   if(!confirm("Delete photo " + n + " from the live gallery?")) return;
