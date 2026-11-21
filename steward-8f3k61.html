@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Gallery Administration</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+body{margin:0;background:#141416;color:#eee;font-family:-apple-system,Helvetica,sans-serif}
+.wrap{max-width:900px;margin:30px auto;padding:0 16px}
+h1{font-size:22px}h2{font-size:17px;margin:28px 0 8px}
+button{font-size:14px;padding:8px 14px;border-radius:8px;border:1px solid #666;background:#3a3a3c;color:#eee;cursor:pointer}
+button:hover{filter:brightness(1.2)}
+button.primary{background:#0a84ff;border-color:#0a84ff}
+button.danger{background:#c93030;border-color:#c93030}
+input,select{font-size:14px;padding:8px;border-radius:8px;border:1px solid #555;background:#26262a;color:#eee}
+.gate{text-align:center;padding:60px 0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td,th{padding:6px 8px;border-bottom:1px solid #333;text-align:left}
+th{color:#aaa;font-weight:normal}
+.num{color:#0a84ff;font-weight:bold}
+.stat{font-size:12px;color:#9a9aa2}
+.row{display:flex;gap:10px;align-items:center;margin:10px 0;flex-wrap:wrap}
+.ok{color:#30d158}.err{color:#ff6a5e}
+#log{font-size:12px;color:#9a9aa2;white-space:pre-wrap;max-height:180px;overflow:auto;background:#1b1b1e;padding:10px;border-radius:8px;margin-top:14px}
+.hint{font-size:12.5px;color:#9a9aa2;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Gallery Administration</h1>
+
+<div id="gate" class="gate">
+  <p>Enter admin PIN:</p>
+  <input id="pin" type="password" inputmode="numeric" style="letter-spacing:6px;font-size:22px;width:180px;text-align:center">
+  <button class="primary" onclick="tryPin()">Unlock</button>
+  <p id="perr" class="err"></p>
+</div>
+
+<div id="admin" style="display:none">
+  <div class="row">
+    <span id="tokstat" class="stat">GitHub token: not loaded</span>
+    <button onclick="askToken()" class="primary">Set / update GitHub token</button>
+    <button onclick="refreshStats()">↻ Refresh analytics</button>
+  </div>
+  <p class="hint">Token needs: fine-grained, this repository only, permission “Contents: Read and write”.
+  It is stored only in this browser's local storage and is never sent anywhere except GitHub.</p>
+
+  <h2>Add photos (file, multiple files, or ZIP)</h2>
+  <div class="row">
+    <input type="file" id="addfile" multiple accept="image/*,.zip">
+    <button class="primary" onclick="addPhotos()">Upload &amp; publish</button>
+    <span id="addstat" class="stat"></span>
+  </div>
+  <p class="hint">Accepted: JPEG/PNG image files, or a .zip containing them. Files are auto-numbered to the
+  next free photo position; a thumbnail is generated automatically and the gallery manifest is updated.</p>
+
+  <h2>Photos &amp; analytics</h2>
+  <div class="row"><button onclick="loadStats()">Load analytics table</button>
+  <span class="stat">views = gallery loads · clicks = opened full-size · downloads = saved</span></div>
+  <table id="tbl"><thead><tr><th>File</th><th>Views</th><th>Clicks</th><th>Downloads</th><th></th></tr></thead><tbody></tbody></table>
+  <div id="log"></div>
+</div>
+
+<script>
+const PIN_HASH = "90ebf7385a864277dc9b3832709acd4be31d9dfd7b8698d99524bd3ea68fe552";
+const REPO = "GarrettRoi/anniversary-mass-59EU-gallery";
+const BRANCH = "main";
+const ABACUS = "https://abacus.jasoncameron.dev";
+const KEYP = "g59EU";
+function log(m){ const el = document.getElementById('log'); el.textContent += m + "\n"; el.scrollTop = el.scrollHeight; }
+function tok(){ return localStorage.getItem('gh_token') || ''; }
+function sha256(s){ return crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)).then(b => [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')); }
+async function tryPin(){
+  const v = document.getElementById('pin').value;
+  const h = await sha256(v);
+  if(h === PIN_HASH){ document.getElementById('gate').style.display='none'; document.getElementById('admin').style.display='block';
+    document.getElementById('tokstat').textContent = tok() ? "GitHub token: loaded ✓" : "GitHub token: not loaded"; }
+  else document.getElementById('perr').textContent = "Wrong PIN.";
+}
+function askToken(){
+  const t = prompt("Paste your GitHub fine-grained token (repo: this gallery only, Contents: read+write):");
+  if(t){ localStorage.setItem('gh_token', t.trim()); document.getElementById('tokstat').textContent = "GitHub token: loaded ✓"; }
+}
+async function gh(method, path, body, raw){
+  const headers = {"Authorization": "Bearer " + tok(), "Accept": "application/vnd.github+json"};
+  let opts = {method, headers};
+  if(body) { headers["Content-Type"] = "application/json"; opts.body = JSON.stringify(body); }
+  const r = await fetch("https://api.github.com/repos/" + REPO + "/" + path, opts);
+  if(!r.ok) throw new Error(method + " " + path + " -> " + r.status + " " + (await r.text()).slice(0,140));
+  return raw ? r.arrayBuffer() : r.json();
+}
+async function getManifest(){ const j = await gh("GET", "contents/photos.json?ref=" + BRANCH); return {json: j, data: JSON.parse(atob(j.content.replace(/\n/g,'')))}; }
+async function putFile(path, contentB64, message, sha){
+  const body = {message, branch: BRANCH, content: contentB64};
+  if(sha) body.sha = sha;
+  return gh("PUT", "contents/" + path, body);
+}
+function b64(str){ return btoa(unescape(encodeURIComponent(str))); }
+async function refreshStats(){ await loadStats(); }
+async function loadStats(){
+  const {data} = await getManifest();
+  const tb = document.querySelector('#tbl tbody'); tb.innerHTML = '';
+  for(const p of data){
+    const tr = document.createElement('tr');
+    const get = async (k) => { try { const r = await fetch(`${ABACUS}/get/${k}`); const t = await r.text(); return /^\d+$/.test(t) ? t : "0"; } catch(e){ return "—"; } };
+    const v = await get(KEYP + "-view-" + p.n), c = await get(KEYP + "-click-" + p.n), d = await get(KEYP + "-dl-" + p.n);
+    tr.innerHTML = `<td>${p.f}</td><td class="num">${v}</td><td class="num">${c}</td><td class="num">${d}</td>
+      <td><button class="danger" onclick="delPhoto('${p.n}')">Delete</button></td>`;
+    tb.appendChild(tr);
+  }
+}
+window.delPhoto = async function(n){
+  if(!confirm("Delete photo " + n + " from the live gallery?")) return;
+  try{
+    const {json, data} = await getManifest();
+    const list = data.filter(p => p.n !== n);
+    await putFile("photos.json", b64(JSON.stringify(list, null, 1)), "admin: remove photo " + n, json.sha);
+    for(const suffix of ["photos/photo-" + n + ".jpeg", "thumbs/photo-" + n + ".jpg"]){
+      try{ const jf = await gh("GET", "contents/" + suffix + "?ref=" + BRANCH);
+           await putFile(suffix, "", "admin: delete photo file " + suffix, jf.sha); }catch(e){ log("note: " + e.message); }
+    }
+    log("Deleted photo " + n + " — live gallery updates in ~1 min.");
+    await loadStats();
+  }catch(e){ log("DELETE FAILED: " + e.message); }
+};
+window.addPhotos = async function(){
+  const inp = document.getElementById('addfile');
+  const files = [...inp.files];
+  if(!files.length) return;
+  if(!tok()){ alert("Set your GitHub token first."); return; }
+  document.getElementById('addstat').textContent = "working...";
+  try{
+    let {json, data} = await getManifest();
+    const used = new Set(data.map(p => parseInt(p.n, 10)));
+    let next = 1; while(used.has(next)) next++;
+    const imgs = [];
+    for(const f of files){
+      if(f.name.toLowerCase().endsWith('.zip')){
+        const zf = await JSZip.loadAsync(f);
+        for(const name of Object.keys(zf.files)){
+          const entry = zf.files[name];
+          if(entry.dir) continue;
+          if(/\.(jpe?g|png)$/i.test(name)) imgs.push({name: name.split('/').pop(), blob: await entry.async('blob')});
+        }
+      } else if(/\.(jpe?g|png)$/i.test(f.name)){
+        imgs.push({name: f.name, blob: f});
+      }
+    }
+    if(!imgs.length){ document.getElementById('addstat').textContent = "No image files found."; return; }
+    log("Adding " + imgs.length + " photo(s)...");
+    for(const item of imgs){
+      const n = String(next).padStart(3, '0'); next++;
+      const bmp = await createImageBitmap(item.blob);
+      const cnv = document.createElement('canvas'); cnv.width = bmp.width; cnv.height = bmp.height;
+      cnv.getContext('2d').drawImage(bmp, 0, 0);
+      const full = cnv.toDataURL('image/jpeg', 88).split(',')[1];
+      const tc = document.createElement('canvas');
+      const tw = Math.min(800, bmp.width); const th = Math.round(bmp.height * tw / bmp.width);
+      tc.width = tw; tc.height = th; tc.getContext('2d').drawImage(bmp, 0, 0, tw, th);
+      const thumb = tc.toDataURL('image/jpeg', 80).split(',')[1];
+      await putFile("photos/photo-" + n + ".jpeg", full, "admin: add photo " + n);
+      await putFile("thumbs/photo-" + n + ".jpg", thumb, "admin: add thumb " + n);
+      data.push({n, t: "thumbs/photo-" + n + ".jpg", f: "photos/photo-" + n + ".jpeg"});
+      json = await putFile("photos.json", b64(JSON.stringify(data, null, 1)), "admin: manifest +" + n, json ? json.sha : undefined);
+      json = await gh("GET", "contents/photos.json?ref=" + BRANCH);
+      log("added photo " + n);
+    }
+    document.getElementById('addstat').textContent = "Done — " + imgs.length + " added. Live in ~1 min.";
+    await loadStats();
+  }catch(e){ log("ADD FAILED: " + e.message); document.getElementById('addstat').textContent = ""; }
+};
+</script>
+</div>
+</body>
+</html>
